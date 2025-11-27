@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "IPInfo"
 include(":app")
- 
+include(":domain")
+include(":data")

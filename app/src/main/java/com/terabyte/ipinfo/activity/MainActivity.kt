@@ -1,4 +1,4 @@
-package com.terabyte.ipinfo
+package com.terabyte.ipinfo.activity
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
