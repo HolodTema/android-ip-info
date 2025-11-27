@@ -15,4 +15,9 @@ data class IPInfo(
     val latitude: Double?,
     val longitude: Double?,
     val infoDate: Date
-)
+): Comparable<IPInfo> {
+
+    override fun compareTo(other: IPInfo): Int {
+        return infoDate.time.compareTo(other.infoDate.time)
+    }
+}

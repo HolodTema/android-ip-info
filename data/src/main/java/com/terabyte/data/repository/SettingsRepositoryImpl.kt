@@ -1,14 +1,13 @@
 package com.terabyte.data.repository
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
+import android.content.Context
 import com.terabyte.data.local.settings.SettingsDataStore
 import com.terabyte.data.local.settings.SettingsUIThemeModel
 import com.terabyte.domain.model.UITheme
 import com.terabyte.domain.repository.SettingsRepository
 
-class SettingsRepositoryImpl(dataStore: DataStore<Preferences>) : SettingsRepository {
-    private val settingsStorage = SettingsDataStore(dataStore)
+class SettingsRepositoryImpl(context: Context) : SettingsRepository {
+    private val settingsStorage = SettingsDataStore(context)
 
     override suspend fun saveUITheme(theme: UITheme) {
         settingsStorage.saveUITheme(mapToSettingsUITheme(theme))
