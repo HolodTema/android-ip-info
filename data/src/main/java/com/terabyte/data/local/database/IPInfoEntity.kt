@@ -1,10 +1,13 @@
-package com.terabyte.domain.model
+package com.terabyte.data.local.database
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.util.Date
 import java.util.UUID
 
-data class IPInfo(
-    val id: UUID,
+@Entity(tableName = "ip_infos")
+data class IPInfoEntity(
+    @PrimaryKey val id: UUID = UUID.randomUUID(),
     val ip: String,
     val hostname: String,
     val country: String,
