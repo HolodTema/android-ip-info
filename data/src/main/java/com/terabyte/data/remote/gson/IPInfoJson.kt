@@ -1,0 +1,17 @@
+package com.terabyte.data.remote.gson
+
+import com.google.gson.annotations.SerializedName
+
+data class IPInfoJson(
+    @SerializedName("ip") val ip: String?,
+    @SerializedName("hostname") val hostname: String?,
+    @SerializedName("city") val city: String?,
+    @SerializedName("region") val region: String?,
+    @SerializedName("country") val country: String?,
+    @SerializedName("loc") val location: String?,
+    @SerializedName("org") val organization: String?,
+    @SerializedName("postal") val postal: String?,
+    @SerializedName("timezone") val timezone: String?,
+    @SerializedName("readme") val readme: String?,
+    @SerializedName("anycast") val anycast: Boolean?
+)

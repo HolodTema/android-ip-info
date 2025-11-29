@@ -1,6 +1,6 @@
 package com.terabyte.ipinfo.ui.screen
 
-import androidx.compose.animation.core.keyframes
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,35 +9,44 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.terabyte.data.LOG_TAG
+import com.terabyte.ipinfo.R
 import com.terabyte.domain.model.IPInfo
 import com.terabyte.ipinfo.ui.theme.IPInfoTheme
 import com.terabyte.ipinfo.viewModel.MainViewModel
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 @Composable
 fun ScreenSearch(viewModel: MainViewModel) {
     val scrollState = rememberScrollState()
+    val ipInfo by viewModel.stateFlowIpInfo.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -45,27 +54,22 @@ fun ScreenSearch(viewModel: MainViewModel) {
             .padding(10.dp)
             .verticalScroll(scrollState)
     ) {
-        IpSearchBar()
+        IpSearchBar { ip ->
+            Log.d(LOG_TAG, "ip text: $ip")
+            viewModel.getIpInfo(ip)
+        }
 
-        val ipInfo = IPInfo(
-            id = UUID.randomUUID(),
-            ip = "192.168.0.1",
-            hostname = "google.com",
-            country = "US",
-            region = "California",
-            city = "LA",
-            organization = "Google INC",
-            timezone = "UTC-3",
-            latitude = 0.0,
-            longitude = 0.0,
-            infoDate = Date()
-        )
         IpInfoCard(ipInfo)
     }
 }
 
 @Composable
-fun IpSearchBar() {
+fun IpSearchBar(onButtonSearchClicked: (String) -> Unit) {
+    val ipPart1 = rememberSaveable { mutableStateOf("0") }
+    val ipPart2 = rememberSaveable { mutableStateOf("0") }
+    val ipPart3 = rememberSaveable { mutableStateOf("0") }
+    val ipPart4 = rememberSaveable { mutableStateOf("0") }
+
     Surface(
         shape = RoundedCornerShape(10.dp),
         shadowElevation = 10.dp,
@@ -73,6 +77,7 @@ fun IpSearchBar() {
             .fillMaxWidth()
     ) {
         Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(10.dp)
@@ -91,41 +96,59 @@ fun IpSearchBar() {
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                IpPartTextField()
+                IpPartTextField(ipPart1)
                 Text(
                     text = ".",
                     fontSize = 36.sp
                 )
-                IpPartTextField()
+                IpPartTextField(ipPart2)
                 Text(
                     text = ".",
                     fontSize = 36.sp
                 )
-                IpPartTextField()
+                IpPartTextField(ipPart3)
                 Text(
                     text = ".",
                     fontSize = 36.sp
                 )
-                IpPartTextField()
+                IpPartTextField(ipPart4)
+            }
+
+            Button(
+                onClick = {
+                    val ip = "${ipPart1.value}.${ipPart2.value}.${ipPart3.value}.${ipPart4.value}"
+                    onButtonSearchClicked(ip)
+                },
+                enabled = isIpPartsValid(ipPart1.value, ipPart2.value, ipPart3.value, ipPart4.value),
+                modifier = Modifier
+                    .padding(top = 20.dp)
+            ) {
+                Text(
+                    text = "Search!"
+                )
             }
         }
     }
 }
 
 @Composable
-fun IpPartTextField() {
+fun IpPartTextField(stateText: MutableState<String>) {
     OutlinedTextField(
-        value = "",
+        value = stateText.value,
         onValueChange = {
-
+            if (it.length <= 3) {
+                stateText.value = it
+            }
         },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number
         ),
-        placeholder = {
-            Text("255")
-        },
+        colors = OutlinedTextFieldDefaults.colors(
+            errorTextColor = Color.Red,
+            errorBorderColor = Color.Red,
+        ),
+        isError = !isIpPartValid(stateText.value),
         modifier = Modifier
             .width(70.dp)
     )
@@ -133,6 +156,21 @@ fun IpPartTextField() {
 
 @Composable
 fun IpInfoCard(ipInfo: IPInfo?) {
+    val textNoData = stringResource(R.string.no_data)
+    val textDate = if (ipInfo == null) {
+        textNoData
+    }
+    else {
+        val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+        dateFormat.format(ipInfo.infoDate)
+    }
+    val textLocation = if (ipInfo == null || ipInfo.latitude == null || ipInfo.longitude == null) {
+        textNoData
+    }
+    else {
+        "${ipInfo.latitude}°   ${ipInfo.longitude}°"
+    }
+
     Surface(
         shadowElevation = 10.dp,
         shape = RoundedCornerShape(10.dp),
@@ -147,70 +185,70 @@ fun IpInfoCard(ipInfo: IPInfo?) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(10.dp)
             )
-        }
-        else {
+        } else {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(10.dp)
             ) {
                 Text(
-                    text = "Ip information:",
+                    text = stringResource(R.string.ip_information),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                 )
                 Text(
-                    text = "ipv4-address: ${ipInfo.ip}",
+                    text = "${stringResource(R.string.ip_address)} ${ipInfo.ip ?: textNoData}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 20.dp)
                 )
                 Text(
-                    text = "hostname: ${ipInfo.hostname}",
+                    text = "${stringResource(R.string.host)} ${ipInfo.hostname ?: textNoData}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
                 )
                 Text(
-                    text = "country: ${ipInfo.country}",
+                    text = "${stringResource(R.string.country)} ${ipInfo.country ?: textNoData}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
                 )
                 Text(
-                    text = "region: ${ipInfo.region}",
+                    text = "${stringResource(R.string.region)} ${ipInfo.region ?: textNoData}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
                 )
                 Text(
-                    text = "city: ${ipInfo.city}",
+                    text = "${stringResource(R.string.city)} ${ipInfo.city ?: textNoData}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
                 )
                 Text(
-                    text = "organization: ${ipInfo.organization}",
+                    text = "${stringResource(R.string.organization)} ${ipInfo.organization ?: textNoData}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
                 )
                 Text(
-                    text = "Date: ${ipInfo.infoDate}",
+                    text = "${stringResource(R.string.date_of_search)} ${textDate}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
                 )
                 Text(
-                    text = "Timezone: ${ipInfo.timezone}",
+                    text = "${stringResource(R.string.timezone)} ${ipInfo.timezone ?: textNoData}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
                 )
                 Text(
-                    text = "Location: ${ipInfo.latitude}°   ${ipInfo.longitude}°",
+                    text = "${stringResource(R.string.location)} $textLocation",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
@@ -227,14 +265,14 @@ fun IpInfoCard(ipInfo: IPInfo?) {
 
                         }
                     ) {
-                        Text("Copy")
+                        Text(stringResource(R.string.copy))
                     }
                     Button(
                         onClick = {
 
                         }
                     ) {
-                        Text("Share")
+                        Text(stringResource(R.string.share))
                     }
                 }
             }
@@ -246,7 +284,9 @@ fun IpInfoCard(ipInfo: IPInfo?) {
 @Composable
 fun IpSearchBarPreview() {
     IPInfoTheme {
-        IpSearchBar()
+        IpSearchBar {
+
+        }
     }
 }
 
@@ -270,4 +310,29 @@ fun IpInfoCardPreview() {
         IpInfoCard(ipInfo)
     }
 }
+
+private fun isIpPartValid(ipPart: String): Boolean {
+    if (ipPart.length > 1 && ipPart.startsWith("0")) {
+        return false
+    }
+    try {
+        val ipPartInt = ipPart.toInt()
+        return (ipPartInt >= 0) && (ipPartInt <= 255)
+    } catch (e: Exception) {
+        return false
+    }
+}
+
+private fun isIpPartsValid(
+    ipPart1: String,
+    ipPart2: String,
+    ipPart3: String,
+    ipPart4: String
+): Boolean {
+    return isIpPartValid(ipPart1) &&
+            isIpPartValid(ipPart2) &&
+            isIpPartValid(ipPart3) &&
+            isIpPartValid(ipPart4)
+}
+
 

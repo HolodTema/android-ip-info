@@ -8,6 +8,7 @@ import com.terabyte.domain.model.UITheme
 import com.terabyte.domain.repository.IPInfoRepository
 import com.terabyte.domain.repository.SettingsRepository
 import com.terabyte.domain.usecase.GetIPInfoHistoryUseCase
+import com.terabyte.domain.usecase.GetIPInfoUseCase
 import com.terabyte.domain.usecase.GetUIThemeUseCase
 import com.terabyte.domain.usecase.SaveUIThemeUseCase
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ class MainViewModel(
     private val getUIThemeUseCase = GetUIThemeUseCase(settingsRepository)
     private val saveUIThemeUseCase = SaveUIThemeUseCase(settingsRepository)
     private val getIPInfoHistoryUseCase = GetIPInfoHistoryUseCase(ipInfoRepository)
+    private val getIPInfoUseCase = GetIPInfoUseCase(ipInfoRepository)
 
 
     private val _stateFlowIsDarkTheme = MutableStateFlow(false)
@@ -32,6 +34,9 @@ class MainViewModel(
 
     private val _stateFlowSearchHistory = MutableStateFlow<List<IPInfo>>(emptyList())
     val stateFlowSearchHistory = _stateFlowSearchHistory.asStateFlow()
+
+    private val _stateFlowIpInfo = MutableStateFlow<IPInfo?>(null)
+    val stateFlowIpInfo = _stateFlowIpInfo.asStateFlow()
 
 
     init {
@@ -66,6 +71,20 @@ class MainViewModel(
             val history = getIPInfoHistoryUseCase.execute()
             withContext(Dispatchers.Main) {
                 _stateFlowSearchHistory.value = history
+            }
+        }
+    }
+
+    fun getIpInfo(ip: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val ipInfo = getIPInfoUseCase.execute(ip)
+
+            ipInfo?.let {
+                _stateFlowSearchHistory.value = listOf(ipInfo).plus(stateFlowSearchHistory.value)
+            }
+
+            withContext(Dispatchers.Main) {
+                _stateFlowIpInfo.value = ipInfo
             }
         }
     }

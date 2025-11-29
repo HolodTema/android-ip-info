@@ -10,4 +10,6 @@ interface IPInfoRepository {
 
     suspend fun deleteIpInfo(ipInfo: IPInfo)
 
+    suspend fun requestIpInfo(ip: String): IPInfo?
+
 }
