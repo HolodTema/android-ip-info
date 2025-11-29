@@ -12,4 +12,6 @@ interface IPInfoRepository {
 
     suspend fun requestIpInfo(ip: String): IPInfo?
 
+    suspend fun deleteIpInfoHistory()
+
 }

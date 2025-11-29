@@ -7,16 +7,17 @@ import com.terabyte.domain.model.IPInfo
 import com.terabyte.domain.model.UITheme
 import com.terabyte.domain.repository.IPInfoRepository
 import com.terabyte.domain.repository.SettingsRepository
+import com.terabyte.domain.usecase.DeleteIPInfoHistoryUseCase
 import com.terabyte.domain.usecase.GetIPInfoHistoryUseCase
 import com.terabyte.domain.usecase.GetIPInfoUseCase
 import com.terabyte.domain.usecase.GetUIThemeUseCase
 import com.terabyte.domain.usecase.SaveUIThemeUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class MainViewModel(
     ipInfoRepository: IPInfoRepository,
@@ -26,6 +27,7 @@ class MainViewModel(
     private val saveUIThemeUseCase = SaveUIThemeUseCase(settingsRepository)
     private val getIPInfoHistoryUseCase = GetIPInfoHistoryUseCase(ipInfoRepository)
     private val getIPInfoUseCase = GetIPInfoUseCase(ipInfoRepository)
+    private val deleteIPInfoHistoryUseCase = DeleteIPInfoHistoryUseCase(ipInfoRepository)
 
 
     private val _stateFlowIsDarkTheme = MutableStateFlow(false)
@@ -37,6 +39,9 @@ class MainViewModel(
 
     private val _stateFlowIpInfo = MutableStateFlow<IPInfo?>(null)
     val stateFlowIpInfo = _stateFlowIpInfo.asStateFlow()
+
+    private val _stateFlowExpandedIpInfoId = MutableStateFlow<UUID?>(null)
+    val stateFlowExpandedIpInfoId = _stateFlowExpandedIpInfoId.asStateFlow()
 
 
     init {
@@ -65,16 +70,6 @@ class MainViewModel(
         }
     }
 
-
-    private fun loadSearchHistory() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val history = getIPInfoHistoryUseCase.execute()
-            withContext(Dispatchers.Main) {
-                _stateFlowSearchHistory.value = history
-            }
-        }
-    }
-
     fun getIpInfo(ip: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val ipInfo = getIPInfoUseCase.execute(ip)
@@ -85,6 +80,33 @@ class MainViewModel(
 
             withContext(Dispatchers.Main) {
                 _stateFlowIpInfo.value = ipInfo
+            }
+        }
+    }
+
+    fun deleteAllIpInfo() {
+        if (stateFlowSearchHistory.value.isNotEmpty()) {
+            viewModelScope.launch(Dispatchers.IO) {
+                deleteIPInfoHistoryUseCase.execute()
+                withContext(Dispatchers.Main) {
+                    loadSearchHistory()
+                }
+            }
+        }
+    }
+
+    fun changeExpandedItemId(uuid: UUID?) {
+        _stateFlowExpandedIpInfoId.value = uuid
+    }
+
+
+    private fun loadSearchHistory() {
+        _stateFlowExpandedIpInfoId.value = null
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val history = getIPInfoHistoryUseCase.execute()
+            withContext(Dispatchers.Main) {
+                _stateFlowSearchHistory.value = history
             }
         }
     }

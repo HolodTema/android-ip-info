@@ -20,4 +20,8 @@ class DatabaseStorageImpl(context: Context) : DatabaseStorage {
     override suspend fun delete(ipInfo: IPInfoEntity) {
         db.ipInfoDao().delete(ipInfo)
     }
+
+    override suspend fun deleteAll() {
+        db.ipInfoDao().deleteAll()
+    }
 }

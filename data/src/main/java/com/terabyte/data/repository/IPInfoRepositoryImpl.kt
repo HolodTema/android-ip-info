@@ -41,6 +41,10 @@ class IPInfoRepositoryImpl(context: Context) : IPInfoRepository {
         return mapToIPInfo(ipInfoEntity)
     }
 
+    override suspend fun deleteIpInfoHistory() {
+        databaseStorage.deleteAll()
+    }
+
     private fun mapToIPInfoEntity(ipInfo: IPInfo): IPInfoEntity {
         return IPInfoEntity(
             id = ipInfo.id,

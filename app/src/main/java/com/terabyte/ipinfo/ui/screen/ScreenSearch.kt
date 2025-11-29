@@ -236,12 +236,6 @@ fun IpInfoCard(ipInfo: IPInfo?) {
                         .padding(top = 10.dp)
                 )
                 Text(
-                    text = "${stringResource(R.string.date_of_search)} ${textDate}",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp)
-                )
-                Text(
                     text = "${stringResource(R.string.timezone)} ${ipInfo.timezone ?: textNoData}",
                     modifier = Modifier
                         .fillMaxWidth()
@@ -249,6 +243,12 @@ fun IpInfoCard(ipInfo: IPInfo?) {
                 )
                 Text(
                     text = "${stringResource(R.string.location)} $textLocation",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                )
+                Text(
+                    text = "${stringResource(R.string.date_of_search)} $textDate",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)

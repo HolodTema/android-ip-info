@@ -16,4 +16,7 @@ interface IPInfoDao {
 
     @Query("SELECT * FROM ip_infos")
     fun getAll(): List<IPInfoEntity>
+
+    @Query("DELETE FROM ip_infos")
+    fun deleteAll()
 }

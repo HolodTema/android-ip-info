@@ -8,4 +8,6 @@ interface DatabaseStorage {
 
     suspend fun delete(ipInfo: IPInfoEntity)
 
+    suspend fun deleteAll()
+
 }
