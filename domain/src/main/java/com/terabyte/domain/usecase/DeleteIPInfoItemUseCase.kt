@@ -1,4 +1,12 @@
 package com.terabyte.domain.usecase
 
-class DeleteIPInfoItemUseCase {
+import com.terabyte.domain.model.IPInfo
+import com.terabyte.domain.repository.IPInfoRepository
+
+class DeleteIPInfoItemUseCase(private val ipInfoRepository: IPInfoRepository) {
+
+    suspend fun execute(ipInfo: IPInfo) {
+        ipInfoRepository.deleteIpInfo(ipInfo)
+    }
+
 }

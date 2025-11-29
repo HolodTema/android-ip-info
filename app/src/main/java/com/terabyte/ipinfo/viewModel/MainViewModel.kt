@@ -8,6 +8,7 @@ import com.terabyte.domain.model.UITheme
 import com.terabyte.domain.repository.IPInfoRepository
 import com.terabyte.domain.repository.SettingsRepository
 import com.terabyte.domain.usecase.DeleteIPInfoHistoryUseCase
+import com.terabyte.domain.usecase.DeleteIPInfoItemUseCase
 import com.terabyte.domain.usecase.GetIPInfoHistoryUseCase
 import com.terabyte.domain.usecase.GetIPInfoUseCase
 import com.terabyte.domain.usecase.GetUIThemeUseCase
@@ -28,6 +29,7 @@ class MainViewModel(
     private val getIPInfoHistoryUseCase = GetIPInfoHistoryUseCase(ipInfoRepository)
     private val getIPInfoUseCase = GetIPInfoUseCase(ipInfoRepository)
     private val deleteIPInfoHistoryUseCase = DeleteIPInfoHistoryUseCase(ipInfoRepository)
+    private val deleteIPInfoItemUseCase = DeleteIPInfoItemUseCase(ipInfoRepository)
 
 
     private val _stateFlowIsDarkTheme = MutableStateFlow(false)
@@ -85,6 +87,7 @@ class MainViewModel(
     }
 
     fun deleteAllIpInfo() {
+        _stateFlowExpandedIpInfoId.value = null
         if (stateFlowSearchHistory.value.isNotEmpty()) {
             viewModelScope.launch(Dispatchers.IO) {
                 deleteIPInfoHistoryUseCase.execute()
@@ -99,10 +102,20 @@ class MainViewModel(
         _stateFlowExpandedIpInfoId.value = uuid
     }
 
+    fun deleteIpInfoItem(ipInfo: IPInfo) {
+        viewModelScope.launch(Dispatchers.IO) {
+            deleteIPInfoItemUseCase.execute(ipInfo)
+            withContext(Dispatchers.Main) {
+                if (stateFlowExpandedIpInfoId.value == ipInfo.id) {
+                    _stateFlowExpandedIpInfoId.value = null
+                }
+                loadSearchHistory()
+            }
+        }
+    }
+
 
     private fun loadSearchHistory() {
-        _stateFlowExpandedIpInfoId.value = null
-
         viewModelScope.launch(Dispatchers.IO) {
             val history = getIPInfoHistoryUseCase.execute()
             withContext(Dispatchers.Main) {

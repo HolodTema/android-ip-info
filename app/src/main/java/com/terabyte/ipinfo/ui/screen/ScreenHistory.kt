@@ -38,8 +38,6 @@ fun ScreenHistory(viewModel: MainViewModel) {
     val listIpInfo by viewModel.stateFlowSearchHistory.collectAsStateWithLifecycle()
     val stateExpandedItemId = viewModel.stateFlowExpandedIpInfoId.collectAsStateWithLifecycle()
 
-    val changeExpandedItemIdListener = viewModel::changeExpandedItemId
-
     if (listIpInfo.isEmpty()) {
         TextNoHistory()
     } else {
@@ -47,7 +45,12 @@ fun ScreenHistory(viewModel: MainViewModel) {
 
         ) {
             SurfaceAmountHistoryItems(listIpInfo.size)
-            ListIPInfoSearchHistory(listIpInfo, stateExpandedItemId, changeExpandedItemIdListener)
+            ListIPInfoSearchHistory(
+                listIpInfo = listIpInfo,
+                stateExpandedItemId = stateExpandedItemId,
+                onExpandedItemIdChanged = viewModel::changeExpandedItemId,
+                onButtonDeleteClicked = viewModel::deleteIpInfoItem
+            )
         }
 
     }
@@ -98,7 +101,8 @@ fun SurfaceAmountHistoryItems(amount: Int) {
 fun ListIPInfoSearchHistory(
     listIpInfo: List<IPInfo>,
     stateExpandedItemId: State<UUID?>,
-    onExpandedItemIdChanged: (UUID?) -> Unit
+    onExpandedItemIdChanged: (UUID?) -> Unit,
+    onButtonDeleteClicked: (IPInfo) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier
@@ -109,10 +113,17 @@ fun ListIPInfoSearchHistory(
                 ListItemIpInfoCompact(it) {
                     onExpandedItemIdChanged(it.id)
                 }
-            } else if (stateExpandedItemId.value == it.id) {
-                ListItemIpInfoExpanded(it) {
-                    onExpandedItemIdChanged(null)
-                }
+            }
+            else if (stateExpandedItemId.value == it.id) {
+                ListItemIpInfoExpanded(
+                    ipInfo = it,
+                    onButtonCompactClicked = {
+                        onExpandedItemIdChanged(null)
+                    },
+                    onButtonDeleteClicked = {
+                        onButtonDeleteClicked(it)
+                    }
+                )
             } else {
                 ListItemIpInfoCompact(it) {
                     onExpandedItemIdChanged(it.id)
@@ -124,7 +135,7 @@ fun ListIPInfoSearchHistory(
 
 
 @Composable
-fun ListItemIpInfoExpanded(ipInfo: IPInfo, onButtonCompactClicked: () -> Unit) {
+fun ListItemIpInfoExpanded(ipInfo: IPInfo, onButtonCompactClicked: () -> Unit, onButtonDeleteClicked: ()->Unit) {
     val textNoData = stringResource(R.string.no_data)
 
     val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
@@ -183,11 +194,8 @@ fun ListItemIpInfoExpanded(ipInfo: IPInfo, onButtonCompactClicked: () -> Unit) {
                         )
                     }
                     IconButton(
-                        onClick = {
-
-                        },
-
-                        ) {
+                        onClick = onButtonDeleteClicked,
+                    ) {
                         Icon(
                             painterResource(R.drawable.ic_delete),
                             contentDescription = "delete",
