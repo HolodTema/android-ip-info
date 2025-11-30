@@ -1,6 +1,7 @@
 package com.terabyte.ipinfo.ui.screen
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,6 +27,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -47,6 +50,8 @@ import java.util.UUID
 fun ScreenSearch(viewModel: MainViewModel) {
     val scrollState = rememberScrollState()
     val ipInfo by viewModel.stateFlowIpInfo.collectAsStateWithLifecycle()
+    val resources = LocalResources.current
+    val toastCopied = Toast.makeText(LocalContext.current, stringResource(R.string.toast_copied), Toast.LENGTH_SHORT)
 
     Column(
         modifier = Modifier
@@ -59,7 +64,10 @@ fun ScreenSearch(viewModel: MainViewModel) {
             viewModel.getIpInfo(ip)
         }
 
-        IpInfoCard(ipInfo)
+        IpInfoCard(ipInfo) {
+            viewModel.copyIPInfoToClipboard(resources, it)
+            toastCopied.show()
+        }
     }
 }
 
@@ -155,7 +163,7 @@ fun IpPartTextField(stateText: MutableState<String>) {
 }
 
 @Composable
-fun IpInfoCard(ipInfo: IPInfo?) {
+fun IpInfoCard(ipInfo: IPInfo?, onCopyButtonClicked: (IPInfo)->Unit) {
     val textNoData = stringResource(R.string.no_data)
     val textDate = if (ipInfo == null) {
         textNoData
@@ -262,7 +270,7 @@ fun IpInfoCard(ipInfo: IPInfo?) {
                 ) {
                     Button(
                         onClick = {
-
+                            onCopyButtonClicked(ipInfo)
                         }
                     ) {
                         Text(stringResource(R.string.copy))
@@ -307,7 +315,9 @@ fun IpInfoCardPreview() {
             longitude = 0.0,
             infoDate = Date()
         )
-        IpInfoCard(ipInfo)
+        IpInfoCard(ipInfo) {
+
+        }
     }
 }
 

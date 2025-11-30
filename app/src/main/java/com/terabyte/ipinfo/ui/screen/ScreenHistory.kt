@@ -1,5 +1,6 @@
 package com.terabyte.ipinfo.ui.screen
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,8 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -37,6 +40,8 @@ import java.util.UUID
 fun ScreenHistory(viewModel: MainViewModel) {
     val listIpInfo by viewModel.stateFlowSearchHistory.collectAsStateWithLifecycle()
     val stateExpandedItemId = viewModel.stateFlowExpandedIpInfoId.collectAsStateWithLifecycle()
+    val resources = LocalResources.current
+    val toastCopied = Toast.makeText(LocalContext.current, stringResource(R.string.toast_copied), Toast.LENGTH_SHORT)
 
     if (listIpInfo.isEmpty()) {
         TextNoHistory()
@@ -49,7 +54,11 @@ fun ScreenHistory(viewModel: MainViewModel) {
                 listIpInfo = listIpInfo,
                 stateExpandedItemId = stateExpandedItemId,
                 onExpandedItemIdChanged = viewModel::changeExpandedItemId,
-                onButtonDeleteClicked = viewModel::deleteIpInfoItem
+                onButtonDeleteClicked = viewModel::deleteIpInfoItem,
+                onButtonCopyClicked = { ipInfo ->
+                    viewModel.copyIPInfoToClipboard(resources, ipInfo)
+                    toastCopied.show()
+                }
             )
         }
 
@@ -103,6 +112,7 @@ fun ListIPInfoSearchHistory(
     stateExpandedItemId: State<UUID?>,
     onExpandedItemIdChanged: (UUID?) -> Unit,
     onButtonDeleteClicked: (IPInfo) -> Unit,
+    onButtonCopyClicked: (IPInfo) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -113,8 +123,7 @@ fun ListIPInfoSearchHistory(
                 ListItemIpInfoCompact(it) {
                     onExpandedItemIdChanged(it.id)
                 }
-            }
-            else if (stateExpandedItemId.value == it.id) {
+            } else if (stateExpandedItemId.value == it.id) {
                 ListItemIpInfoExpanded(
                     ipInfo = it,
                     onButtonCompactClicked = {
@@ -122,6 +131,9 @@ fun ListIPInfoSearchHistory(
                     },
                     onButtonDeleteClicked = {
                         onButtonDeleteClicked(it)
+                    },
+                    onButtonCopyClicked = {
+                        onButtonCopyClicked(it)
                     }
                 )
             } else {
@@ -135,7 +147,11 @@ fun ListIPInfoSearchHistory(
 
 
 @Composable
-fun ListItemIpInfoExpanded(ipInfo: IPInfo, onButtonCompactClicked: () -> Unit, onButtonDeleteClicked: ()->Unit) {
+fun ListItemIpInfoExpanded(
+    ipInfo: IPInfo, onButtonCompactClicked: () -> Unit,
+    onButtonDeleteClicked: () -> Unit,
+    onButtonCopyClicked: () -> Unit,
+) {
     val textNoData = stringResource(R.string.no_data)
 
     val dateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
@@ -168,11 +184,8 @@ fun ListItemIpInfoExpanded(ipInfo: IPInfo, onButtonCompactClicked: () -> Unit, o
             ) {
                 Row {
                     IconButton(
-                        onClick = {
-
-                        },
-
-                        ) {
+                        onClick = onButtonCopyClicked,
+                    ) {
                         Icon(
                             painterResource(R.drawable.ic_copy),
                             contentDescription = "copy",

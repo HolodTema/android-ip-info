@@ -40,7 +40,9 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by lazy {
         val ipInfoRepository = (application as MyApplication).ipInfoRepository
         val settingsRepository = (application as MyApplication).settingsRepository
-        val factory = MainViewModel.Factory(ipInfoRepository, settingsRepository)
+        val clipboardRepository = (application as MyApplication).clipboardRepository
+
+        val factory = MainViewModel.Factory(ipInfoRepository, settingsRepository, clipboardRepository)
         ViewModelProvider(this, factory)[MainViewModel::class]
     }
 
